@@ -33,16 +33,33 @@ dogsRouter.get('/:id', async (req, res) => {
 dogsRouter.post('/create', async (req, res) => {
     try {
         const { first_name, gender, sterilized, birth_date, envy } = req.body;
+
+        // Vérification des champs requis
+        if (!first_name || !gender || sterilized === undefined || !birth_date || !envy) {
+            return res.status(400).json({ error: "Tous les champs sont requis : first_name, gender, sterilized, birth_date, envy" });
+        }
+
+        // Vérification du format de la date pour MySQL (YYYY-MM-DD)
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(birth_date)) {
+            return res.status(400).json({ error: "birth_date doit être au format YYYY-MM-DD" });
+        }
+
+        // Requête SQL
         const sql = `INSERT INTO dogs (first_name, gender, sterilized, birth_date, envy) VALUES (?, ?, ?, ?, ?)`;
         const [result] = await pool.query(sql, [first_name, gender, sterilized, birth_date, envy]);
+
+        // Réponse
         res.json({
             message: `Le chien ${first_name} a bien été ajouté !`,
             dog: { id: result.insertId, first_name, gender, sterilized, birth_date, envy }
         });
     } catch (err) {
+        console.error("Erreur MySQL :", err); // Affiche l'erreur complète dans la console
         res.status(500).json({ error: "Erreur serveur" });
     }
 });
+
 
 // Route PUT : modifier un chien existant
 dogsRouter.put('/:id', async (req, res) => {
