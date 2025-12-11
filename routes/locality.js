@@ -1,13 +1,9 @@
-// Importation d'Express pour gérer les routes
 import express from "express";
-
-// Importation du pool MySQL pour communiquer avec la base de données
 import pool from "../db/db.js";
 
-// Création du routeur Express pour les localités
 const localityRouter = express.Router();
 
-// Route GET : récupérer toutes les localités
+// GET all localities
 localityRouter.get('/', async (req, res) => {
     try {
         const [rows] = await pool.query("SELECT * FROM locality");
@@ -17,55 +13,65 @@ localityRouter.get('/', async (req, res) => {
     }
 });
 
-// Route GET : récupérer une localité par son ID
+// GET locality by ID
 localityRouter.get('/:id', async (req, res) => {
     try {
         const id = req.params.id;
         const [rows] = await pool.query("SELECT * FROM locality WHERE idlocality = ?", [id]);
-        res.json(rows[0] || {});
+        if (rows.length === 0) return res.status(404).json({ error: "Locality not found" });
+        res.json(rows[0]);
     } catch (err) {
         res.status(500).json({ error: "Erreur serveur" });
     }
 });
 
-// Route POST : ajouter une nouvelle localité
+// POST new locality
 localityRouter.post('/create', async (req, res) => {
     try {
         const { name, postal_code, postal_comp, toponyme, canton_code, langage_code } = req.body;
-        const sql = `INSERT INTO locality (name, postal_code, postal_comp, toponyme, canton_code, langage_code) VALUES (?, ?, ?, ?, ?, ?)`;
+        if (!name || !postal_code) return res.status(400).json({ error: "name and postal_code are required" });
+
+        const sql = `INSERT INTO locality (name, postal_code, postal_comp, toponyme, canton_code, langage_code) 
+                     VALUES (?, ?, ?, ?, ?, ?)`;
         const [result] = await pool.query(sql, [name, postal_code, postal_comp, toponyme, canton_code, langage_code]);
-        res.json({
-            message: `La localité ${name} a bien été ajoutée !`,
-            locality: { id: result.insertId, name, postal_code, postal_comp, toponyme, canton_code, langage_code }
+
+        res.status(201).json({ 
+            message: `Locality ${name} added`, 
+            locality: { id: result.insertId, name, postal_code, postal_comp, toponyme, canton_code, langage_code } 
         });
     } catch (err) {
-        res.status(500).json({ error: "Erreur serveur" });
+        res.status(500).json({ error: err.message });
     }
 });
 
-// Route PUT : modifier une localité existante
+// PUT update locality
 localityRouter.put('/:id', async (req, res) => {
     try {
         const id = req.params.id;
         const { name, postal_code, postal_comp, toponyme, canton_code, langage_code } = req.body;
-        const sql = `UPDATE locality SET name=?, postal_code=?, postal_comp=?, toponyme=?, canton_code=?, langage_code=? WHERE idlocality=?`;
-        await pool.query(sql, [name, postal_code, postal_comp, toponyme, canton_code, langage_code, id]);
-        res.json({ message: "Localité mise à jour", locality: { id, name, postal_code, postal_comp, toponyme, canton_code, langage_code } });
+        const [result] = await pool.query(
+            `UPDATE locality SET name=?, postal_code=?, postal_comp=?, toponyme=?, canton_code=?, langage_code=? WHERE idlocality=?`,
+            [name, postal_code, postal_comp, toponyme, canton_code, langage_code, id]
+        );
+
+        if (result.affectedRows === 0) return res.status(404).json({ error: "Locality not found" });
+
+        res.json({ message: "Locality updated", locality: { id, name, postal_code, postal_comp, toponyme, canton_code, langage_code } });
     } catch (err) {
         res.status(500).json({ error: "Erreur serveur" });
     }
 });
 
-// Route DELETE : supprimer une localité par son ID
+// DELETE locality
 localityRouter.delete('/:id', async (req, res) => {
     try {
         const id = req.params.id;
-        await pool.query("DELETE FROM locality WHERE idlocality = ?", [id]);
-        res.json({ message: "Localité supprimée" });
+        const [result] = await pool.query("DELETE FROM locality WHERE idlocality = ?", [id]);
+        if (result.affectedRows === 0) return res.status(404).json({ error: "Locality not found" });
+        res.json({ message: "Locality deleted" });
     } catch (err) {
         res.status(500).json({ error: "Erreur serveur" });
     }
 });
 
-// Exportation du routeur pour utilisation dans d'autres fichiers
 export { localityRouter };
