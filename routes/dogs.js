@@ -1,89 +1,121 @@
-// Importation d'Express pour gérer les routes
 import express from "express";
-
-// Importation du pool MySQL pour communiquer avec la base de données
 import pool from "../db/db.js";
 
-// Création du routeur Express pour les chiens
 const dogsRouter = express.Router();
 
-// Route GET : récupérer tous les chiens
-// Utilise une requête SQL SELECT pour lire toutes les entrées de la table "dogs"
+// GET all dogs (with optional race filter)
 dogsRouter.get('/', async (req, res) => {
     try {
-        const [rows] = await pool.query("SELECT * FROM dogs");
+        const { race } = req.query;
+
+        let sql = "SELECT d.* FROM dogs d";
+        let params = [];
+
+        if (race) {
+            // Join with many-to-many table to filter by race
+            sql += `
+                JOIN races_has_dogs rhd ON d.iddogs = rhd.dogs_iddogs
+                JOIN races r ON rhd.races_idraces = r.idraces
+                WHERE r.name = ?
+            `;
+            params.push(race);
+        }
+
+        const [rows] = await pool.query(sql, params);
         res.json(rows);
     } catch (err) {
+        console.error(err);
         res.status(500).json({ error: "Erreur serveur" });
     }
 });
 
-// Route GET : récupérer un chien par son ID
+// GET dog by ID
 dogsRouter.get('/:id', async (req, res) => {
     try {
         const id = req.params.id;
+        if (isNaN(id)) return res.status(400).json({ error: "ID invalide" });
+
         const [rows] = await pool.query("SELECT * FROM dogs WHERE iddogs = ?", [id]);
-        res.json(rows[0] || {});
+        if (rows.length === 0) return res.status(404).json({ error: "Dog not found" });
+
+        res.json(rows[0]);
     } catch (err) {
+        console.error(err);
         res.status(500).json({ error: "Erreur serveur" });
     }
 });
 
-// Route POST : ajouter un nouveau chien à la base
+// POST new dog
 dogsRouter.post('/create', async (req, res) => {
     try {
         const { first_name, gender, sterilized, birth_date, envy } = req.body;
-
-        // Vérification des champs requis
         if (!first_name || !gender || sterilized === undefined || !birth_date || !envy) {
-            return res.status(400).json({ error: "Tous les champs sont requis : first_name, gender, sterilized, birth_date, envy" });
+            return res.status(400).json({ error: "Tous les champs sont requis" });
         }
 
-        // Vérification du format de la date pour MySQL (YYYY-MM-DD)
-        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-        if (!dateRegex.test(birth_date)) {
-            return res.status(400).json({ error: "birth_date doit être au format YYYY-MM-DD" });
-        }
-
-        // Requête SQL
         const sql = `INSERT INTO dogs (first_name, gender, sterilized, birth_date, envy) VALUES (?, ?, ?, ?, ?)`;
         const [result] = await pool.query(sql, [first_name, gender, sterilized, birth_date, envy]);
 
-        // Réponse
-        res.json({
+        res.status(201).json({
             message: `Le chien ${first_name} a bien été ajouté !`,
             dog: { id: result.insertId, first_name, gender, sterilized, birth_date, envy }
         });
     } catch (err) {
-        console.error("Erreur MySQL :", err); // Affiche l'erreur complète dans la console
+        console.error(err);
         res.status(500).json({ error: "Erreur serveur" });
     }
 });
 
-
-// Route PUT : modifier un chien existant
+// PUT dog by ID
 dogsRouter.put('/:id', async (req, res) => {
     try {
         const id = req.params.id;
         const { first_name, gender, sterilized, birth_date, envy } = req.body;
+
         const sql = `UPDATE dogs SET first_name=?, gender=?, sterilized=?, birth_date=?, envy=? WHERE iddogs=?`;
         await pool.query(sql, [first_name, gender, sterilized, birth_date, envy, id]);
+
         res.json({ message: "Dog updated", dog: { id, first_name, gender, sterilized, birth_date, envy } });
     } catch (err) {
+        console.error(err);
         res.status(500).json({ error: "Erreur serveur" });
     }
 });
 
-// Route DELETE : supprimer un chien de la base via son ID
+// DELETE dog by ID
 dogsRouter.delete('/:id', async (req, res) => {
     try {
         const id = req.params.id;
         await pool.query("DELETE FROM dogs WHERE iddogs = ?", [id]);
         res.json({ message: "Dog deleted" });
     } catch (err) {
+        console.error(err);
         res.status(500).json({ error: "Erreur serveur" });
     }
 });
 
-// Exportation du routeur pour utilisation dans d'autres fichiers
-export { dogsRouter };  
+// GET dogs by race name (path param)
+dogsRouter.get('/races/:raceName', async (req, res) => {
+    try {
+        const { raceName } = req.params;
+
+        const sql = `
+            SELECT d.*
+            FROM dogs d
+            JOIN races_has_dogs rhd ON d.iddogs = rhd.dogs_iddogs
+            JOIN races r ON rhd.races_idraces = r.idraces
+            WHERE r.name = ?
+        `;
+
+        const [rows] = await pool.query(sql, [raceName]);
+
+        if (rows.length === 0) return res.status(404).json({ error: `No dogs found for race ${raceName}` });
+
+        res.json(rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Erreur serveur" });
+    }
+});
+
+export { dogsRouter };

@@ -6,6 +6,8 @@ import { clientsRouter } from "./routes/clients.js";
 import { localityRouter } from "./routes/locality.js";
 import { racesRouter } from "./routes/races.js";
 import { servicesRouter } from "./routes/services.js";
+import { racesDogsRouter } from "./routes/races_dogs.js"; 
+import { diseasesRouter } from "./routes/diseases.js";
 
 const app = express();
 const port = process.env.PORT || 3003;
@@ -24,6 +26,8 @@ app.use("/api/clients", clientsRouter);
 app.use("/api/locality", localityRouter);
 app.use("/api/races", racesRouter);
 app.use("/api/services", servicesRouter);
+app.use("/api/races-dogs", racesDogsRouter); 
+app.use("/api/diseases", diseasesRouter)
 
 // Démarrage du serveur
 app.listen(port, () => {
