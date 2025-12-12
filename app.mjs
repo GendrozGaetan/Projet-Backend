@@ -15,15 +15,21 @@ import { servicesRouter } from "./routes/services.js";
 import { racesDogsRouter } from "./routes/races_dogs.js"; 
 // Importe le routeur spécifique pour la gestion des maladies (diseases).
 import { diseasesRouter } from "./routes/diseases.js";
+import { setupSwagger } from "./swagger.js";
+
 
 // Initialise l'application Express.
 const app = express();
+
+
 // Définit le port d'écoute : utilise la variable d'environnement PORT, ou 3003 par défaut.
 const port = process.env.PORT || 3003;
 
 // Middleware pour parser le JSON
 // Configure Express pour analyser le corps des requêtes entrantes au format JSON.
 app.use(express.json());
+
+setupSwagger(app);
 
 // Route de base pour tester le serveur
 // Définit une route GET simple à la racine (/).

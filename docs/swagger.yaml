@@ -1,0 +1,430 @@
+openapi: 3.0.0
+info:
+  title: API Backend du Projet
+  version: 1.0.0
+  description: >
+    Documentation complète de l'API incluant les opérations CRUD,
+    les schémas de données et les exemples de requêtes et réponses.
+
+servers:
+  - url: http://localhost:3000
+
+components:
+  schemas:
+
+    Client:
+      type: object
+      properties:
+        id: { type: integer }
+        firstname: { type: string }
+        lastname: { type: string }
+        email: { type: string }
+        phone: { type: string }
+      required: [firstname, lastname, email]
+
+    Dog:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        age: { type: integer }
+        client_id: { type: integer }
+      required: [name, age, client_id]
+
+    Race:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+      required: [name]
+
+    Locality:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+      required: [name]
+
+    Disease:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        description: { type: string }
+      required: [name]
+
+    Service:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        price: { type: number, format: float }
+      required: [name, price]
+
+    RaceDog:
+      type: object
+      properties:
+        id: { type: integer }
+        dog_id: { type: integer }
+        race_id: { type: integer }
+      required: [dog_id, race_id]
+
+paths:
+
+  ##############################################
+  # CLIENTS
+  ##############################################
+
+  /clients:
+    get:
+      summary: Liste des clients
+      responses:
+        "200":
+          description: Liste récupérée
+          content:
+            application/json:
+              example:
+                - id: 1
+                  firstname: Alain
+                  lastname: Dupont
+                  email: alain@exemple.com
+                  phone: "0600000000"
+
+    post:
+      summary: Ajouter un client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Client" }
+            example:
+              firstname: Pierre
+              lastname: Martin
+              email: pierre@example.com
+              phone: "0612345678"
+      responses:
+        "201":
+          description: Client créé
+
+  /clients/{id}:
+    get:
+      summary: Récupérer un client
+      parameters:
+        - in: path
+          name: id
+          required: true
+      responses:
+        "200":
+          description: Client trouvé
+          content:
+            application/json:
+              example:
+                id: 1
+                firstname: Alain
+                lastname: Dupont
+                email: alain@exemple.com
+
+    put:
+      summary: Modifier un client
+      parameters:
+        - in: path
+          name: id
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Client" }
+            example:
+              firstname: Paul
+              lastname: Durand
+              email: paul@example.com
+              phone: "0645454545"
+      responses:
+        "200": { description: Client modifié }
+
+    delete:
+      summary: Supprimer un client
+      parameters:
+        - in: path
+          name: id
+          required: true
+      responses:
+        "200": { description: Client supprimé }
+
+  ##############################################
+  # DOGS
+  ##############################################
+
+  /dogs:
+    get:
+      summary: Liste des chiens
+      responses:
+        "200":
+          description: Liste récupérée
+
+    post:
+      summary: Ajouter un chien
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Dog" }
+            example:
+              name: Rex
+              age: 4
+              client_id: 1
+      responses:
+        "201": { description: Chien créé }
+
+  /dogs/{id}:
+    get:
+      summary: Récupérer un chien
+      parameters:
+        - in: path
+          name: id
+          required: true
+      responses:
+        "200":
+          description: Chien trouvé
+
+    put:
+      summary: Modifier un chien
+      parameters:
+        - in: path
+          name: id
+          required: true
+      requestBody:
+        content:
+          application/json:
+            example:
+              name: Rocky
+              age: 3
+              client_id: 2
+      responses:
+        "200": { description: Chien modifié }
+
+    delete:
+      summary: Supprimer un chien
+      parameters:
+        - in: path
+          name: id
+          required: true
+      responses:
+        "200": { description: Chien supprimé }
+
+
+  ##############################################
+  # LOCALITY
+  ##############################################
+
+  /locality:
+    get:
+      summary: Liste des localités
+      responses:
+        "200": { description: OK }
+
+    post:
+      summary: Ajouter une localité
+      requestBody:
+        content:
+          application/json:
+            example:
+              name: Paris
+      responses:
+        "201": { description: Créé }
+
+  /locality/{id}:
+    put:
+      summary: Modifier une localité
+      parameters:
+        - in: path
+          name: id
+          required: true
+      requestBody:
+        content:
+          application/json:
+            example:
+              name: Lyon
+      responses:
+        "200": { description: OK }
+
+    delete:
+      summary: Supprimer une localité
+      parameters:
+        - in: path
+          name: id
+          required: true
+      responses:
+        "200": { description: Supprimé }
+
+
+  ##############################################
+  # RACES
+  ##############################################
+
+  /races:
+    get:
+      summary: Liste des races
+      responses:
+        "200": { description: OK }
+
+    post:
+      summary: Ajouter une race
+      requestBody:
+        content:
+          application/json:
+            example:
+              name: Labrador
+      responses:
+        "201": { description: Créé }
+
+  /races/{id}:
+    put:
+      summary: Modifier une race
+      parameters:
+        - in: path
+          name: id
+          required: true
+      requestBody:
+        content:
+          application/json:
+            example:
+              name: Bulldog
+      responses:
+        "200": { description: OK }
+
+    delete:
+      summary: Supprimer une race
+      parameters:
+        - in: path
+          name: id
+          required: true
+      responses:
+        "200": { description: Supprimé }
+
+
+  ##############################################
+  # DISEASES
+  ##############################################
+
+  /diseases:
+    get:
+      summary: Liste des maladies
+      responses:
+        "200": { description: OK }
+
+    post:
+      summary: Ajouter une maladie
+      requestBody:
+        content:
+          application/json:
+            example:
+              name: Rage
+              description: Maladie virale grave.
+      responses:
+        "201": { description: Créé }
+
+  /diseases/{id}:
+    put:
+      summary: Modifier une maladie
+      parameters:
+        - in: path
+          name: id
+          required: true
+      requestBody:
+        content:
+          application/json:
+            example:
+              name: Parvovirose
+              description: Infection virale.
+      responses:
+        "200": { description: OK }
+
+    delete:
+      summary: Supprimer une maladie
+      parameters:
+        - in: path
+          name: id
+          required: true
+      responses:
+        "200": { description: Supprimé }
+
+
+  ##############################################
+  # SERVICES
+  ##############################################
+
+  /services:
+    get:
+      summary: Liste des services
+      responses:
+        "200": { description: OK }
+
+    post:
+      summary: Ajouter un service
+      requestBody:
+        content:
+          application/json:
+            example:
+              name: Toilettage
+              price: 35.0
+      responses:
+        "201": { description: Créé }
+
+  /services/{id}:
+    put:
+      summary: Modifier un service
+      parameters:
+        - in: path
+          name: id
+          required: true
+      requestBody:
+        content:
+          application/json:
+            example:
+              name: Pension
+              price: 50.0
+      responses:
+        "200": { description: OK }
+
+    delete:
+      summary: Supprimer un service
+      parameters:
+        - in: path
+          name: id
+          required: true
+      responses:
+        "200": { description: Supprimé }
+
+
+  ##############################################
+  # RACES_DOGS
+  ##############################################
+
+  /races_dogs:
+    get:
+      summary: Liste des associations race-chien
+      responses:
+        "200": { description: OK }
+
+    post:
+      summary: Associer une race à un chien
+      requestBody:
+        content:
+          application/json:
+            example:
+              dog_id: 1
+              race_id: 2
+      responses:
+        "201": { description: Créé }
+
+  /races_dogs/{id}:
+    delete:
+      summary: Supprimer une association race-chien
+      parameters:
+        - in: path
+          name: id
+          required: true
+      responses:
+        "200": { description: Supprimé }
