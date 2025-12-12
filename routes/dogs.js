@@ -9,71 +9,82 @@ const dogsRouter = express.Router();
 
 // Définit la route GET pour récupérer tous les chiens (avec filtrage par race, âge, genre, stérilisation)
 dogsRouter.get('/', async (req, res) => {
-    // Début du bloc try-catch pour la gestion des erreurs
     try {
-        // Extrait les paramètres de requête (query) pour le filtrage
-        const { race, age, gender, sterilized } = req.query;
-        // Tableau pour stocker les clauses de condition (WHERE)
+        const { race, birth_date, gender, sterilized, first_name, last_name } = req.query;
+
         const conditions = [];
-        // Tableau pour stocker les valeurs des paramètres à lier à la requête SQL
         const values = [];
 
-        // Vérifie si le filtre 'race' est présent
+        // --- Validation et filtres ---
         if (race) {
-            // Ajoute une condition pour filtrer par le nom de la race (nécessite une jointure)
+            const [raceRows] = await pool.query("SELECT * FROM races WHERE name = ?", [race]);
+            if (raceRows.length === 0) {
+                return res.status(400).json({ error: `Invalid 'race': '${race}' does not exist` });
+            }
             conditions.push("races.name = ?");
-            // Ajoute la valeur du nom de la race aux paramètres
             values.push(race);
         }
 
-        // Vérifie si le filtre 'age' est présent
-        if (age) {
-            // Calcule l'âge en années en soustrayant l'année de naissance à l'année actuelle (fonction MySQL)
-            conditions.push("YEAR(CURDATE()) - YEAR(dogs.birth_date) = ?");
-            // Ajoute la valeur de l'âge souhaité aux paramètres
-            values.push(age);
+        if (birth_date) {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(birth_date)) {
+                return res.status(400).json({ error: "Invalid 'birth_date': must be in YYYY-MM-DD format" });
+            }
+            conditions.push("dogs.birth_date = ?");
+            values.push(birth_date);
         }
 
-
-        // Vérifie si le filtre 'gender' est présent
         if (gender) {
-            // Ajoute une condition pour filtrer par genre
+            if (!["M", "F"].includes(gender)) {
+                return res.status(400).json({ error: "Invalid 'gender': must be 'M' or 'F'" });
+            }
             conditions.push("dogs.gender = ?");
-            // Ajoute la valeur du genre aux paramètres
             values.push(gender);
         }
 
-
-        // Vérifie si le filtre 'sterilized' est présent
-        if (sterilized) {
-            // Ajoute une condition pour filtrer par statut de stérilisation
+        if (sterilized !== undefined) {
+            if (!["0", "1"].includes(String(sterilized))) {
+                return res.status(400).json({ error: "Invalid 'sterilized': must be 0 or 1" });
+            }
             conditions.push("dogs.sterilized = ?");
-            // Ajoute la valeur de stérilisation (typiquement 0 ou 1) aux paramètres
             values.push(sterilized);
         }
 
-        // Requête SQL de base : sélectionne toutes les colonnes de `dogs` et utilise les jointures nécessaires
-        let sql = "SELECT dogs.* FROM dogs LEFT JOIN races_has_dogs rhd ON dogs.iddogs = rhd.dogs_iddogs LEFT JOIN races ON rhd.races_idraces = races.idraces";
-        
-        // Vérifie s'il y a des conditions de filtrage
+        if (first_name) {
+            conditions.push("dogs.first_name LIKE ?");
+            values.push(`${first_name}%`);
+        }
+
+        if (last_name) {
+            conditions.push("dogs.last_name LIKE ?");
+            values.push(`${last_name}%`);
+        }
+
+        // --- Construction de la requête ---
+        let sql = `SELECT dogs.* 
+                   FROM dogs 
+                   LEFT JOIN races_has_dogs rhd ON dogs.iddogs = rhd.dogs_iddogs 
+                   LEFT JOIN races ON rhd.races_idraces = races.idraces`;
+
         if (conditions.length > 0) {
-            // Ajoute la clause WHERE, en joignant les conditions par ' AND '
             sql += " WHERE " + conditions.join(" AND ");
         }
 
-        // Exécute la requête SQL dans la base de données
+        // --- Exécution ---
         const [rows] = await pool.query(sql, values);
-        // Renvoie les résultats (les chiens trouvés) au format JSON
+
+        if (rows.length === 0) {
+            return res.status(404).json({ error: "No dog found matching the provided filter(s)" });
+        }
+
         res.json(rows);
 
-    // Capture toute erreur
     } catch (err) {
-        // Affiche l'erreur MySQL dans la console du serveur
-        console.error("Erreur MySQL :", err);
-        // Renvoie une réponse d'erreur HTTP 500
-        res.status(500).json({ error: "Erreur serveur" });
+        console.error("MySQL Error:", err);
+        res.status(500).json({ error: "Server error" });
     }
 });
+
+
 
 
 // GET : récupérer un chien par son ID

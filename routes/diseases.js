@@ -8,64 +8,54 @@ const diseasesRouter = express.Router();
 
 // Définit la route GET pour récupérer une liste de maladies, avec possibilité de filtrage.
 diseasesRouter.get('/', async (req, res) => {
-    // Début du bloc try-catch pour la gestion des erreurs.
     try {
-        // Extrait les paramètres de requête possibles (filtres) de l'URL.
         const { name, symptoms, zoonose, vaccin } = req.query;
-        // Initialise la requête SQL de base pour sélectionner toutes les colonnes de la table 'diseases'.
+
         let sql = "SELECT * FROM diseases";
-        // Tableau pour stocker les valeurs des paramètres à lier à la requête SQL (pour éviter les injections SQL).
         const params = [];
-        // Tableau pour stocker les conditions de filtrage de la clause WHERE.
         const conditions = [];
 
-        // Vérifie si un filtre 'name' est présent.
         if (name) {
-            // Ajoute une condition LIKE pour la recherche partielle par nom (insensible à la casse/position).
-            conditions.push("name LIKE ?");
-            // Ajoute le paramètre de recherche, entouré de '%' pour la recherche partielle.
+            conditions.push("LOWER(name) LIKE LOWER(?)"); // insensible à la casse
             params.push(`%${name}%`);
         }
-        // Vérifie si un filtre 'symptoms' est présent.
         if (symptoms) {
-            // Ajoute une condition LIKE pour la recherche partielle par symptômes.
-            conditions.push("symptoms LIKE ?");
-            // Ajoute le paramètre de recherche de symptômes.
+            conditions.push("LOWER(symptoms) LIKE LOWER(?)");
             params.push(`%${symptoms}%`);
         }
-        // Vérifie si un filtre 'zoonose' est présent (doit être défini, y compris s'il est false/0).
         if (zoonose !== undefined) {
-            // Ajoute une condition d'égalité pour le champ 'zoonose'.
+            if (zoonose !== '0' && zoonose !== '1') 
+                return res.status(400).json({ error: "'zoonose' must be 0 or 1" });
             conditions.push("zoonose = ?");
-            // Convertit la valeur en nombre et l'ajoute aux paramètres.
             params.push(Number(zoonose));
         }
-        // Vérifie si un filtre 'vaccin' est présent.
         if (vaccin !== undefined) {
-            // Ajoute une condition d'égalité pour le champ 'vaccin'.
+            if (vaccin !== '0' && vaccin !== '1') 
+                return res.status(400).json({ error: "'vaccin' must be 0 or 1" });
             conditions.push("vaccin = ?");
-            // Convertit la valeur en nombre et l'ajoute aux paramètres.
             params.push(Number(vaccin));
         }
 
-        // Vérifie s'il y a des conditions de filtrage à appliquer.
         if (conditions.length > 0) {
-            // Ajoute la clause WHERE à la requête SQL, en joignant les conditions avec ' AND '.
             sql += " WHERE " + conditions.join(" AND ");
         }
 
-        // Exécute la requête SQL avec les paramètres. La réponse est destucturée en [rows] (les résultats).
         const [rows] = await pool.query(sql, params);
-        // Envoie la liste des résultats trouvés (rows) en réponse JSON.
+
+        // Vérifie si aucune maladie ne correspond aux filtres
+        if (!rows || rows.length === 0) {
+            return res.status(404).json({ error: "No diseases match the provided filter(s)" });
+        }
+
+        // Sinon, renvoie les maladies trouvées
         res.json(rows);
-    // Capture et gère les erreurs qui pourraient survenir lors de l'exécution du try.
+
     } catch (err) {
-        // Affiche l'erreur MySQL détaillée dans la console du serveur.
         console.error("MySQL Error:", err);
-        // Envoie une réponse d'erreur 500 (Erreur Serveur) avec un message générique.
-        res.status(500).json({ error: "Erreur serveur" });
+        res.status(500).json({ error: "Server error" });
     }
 });
+
 
 // Définit la route GET pour récupérer une seule maladie par son ID.
 diseasesRouter.get('/:id', async (req, res) => {

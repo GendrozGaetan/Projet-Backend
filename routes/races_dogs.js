@@ -14,20 +14,60 @@ const racesDogsRouter = express.Router();
 // Définit la route GET pour récupérer tous les enregistrements de la table d'association.
 // GET : récupérer tous les liens race ↔ dog
 racesDogsRouter.get("/", async (req, res) => {
-    // Début du bloc try-catch pour la gestion des erreurs.
     try {
-        // Exécute la requête SQL pour sélectionner tous les enregistrements de la table `races_has_dogs`.
-        const [rows] = await pool.query("SELECT * FROM races_has_dogs");
-        // Envoie les résultats (tous les liens) en réponse JSON.
+        const { races_idraces, dogs_iddogs } = req.query;
+
+        const conditions = [];
+        const params = [];
+
+        // Vérifie races_idraces si fourni
+        if (races_idraces !== undefined) {
+            if (isNaN(races_idraces)) {
+                return res.status(400).json({ error: "races_idraces invalide" });
+            }
+            // Vérifie si la race existe
+            const [raceCheck] = await pool.query("SELECT * FROM races WHERE idraces = ?", [races_idraces]);
+            if (raceCheck.length === 0) {
+                return res.status(404).json({ error: `Race ${races_idraces} non trouvée` });
+            }
+            conditions.push("races_idraces = ?");
+            params.push(races_idraces);
+        }
+
+        // Vérifie dogs_iddogs si fourni
+        if (dogs_iddogs !== undefined) {
+            if (isNaN(dogs_iddogs)) {
+                return res.status(400).json({ error: "dogs_iddogs invalide" });
+            }
+            // Vérifie si le chien existe
+            const [dogCheck] = await pool.query("SELECT * FROM dogs WHERE iddogs = ?", [dogs_iddogs]);
+            if (dogCheck.length === 0) {
+                return res.status(404).json({ error: `Dog ${dogs_iddogs} non trouvé` });
+            }
+            conditions.push("dogs_iddogs = ?");
+            params.push(dogs_iddogs);
+        }
+
+        // Construire la requête SQL
+        let sql = "SELECT * FROM races_has_dogs";
+        if (conditions.length > 0) {
+            sql += " WHERE " + conditions.join(" AND ");
+        }
+
+        const [rows] = await pool.query(sql, params);
+
+        // Si aucune correspondance, renvoyer 404
+        if (rows.length === 0) {
+            return res.status(404).json({ error: "Aucun lien race ↔ dog trouvé pour les filtres donnés" });
+        }
+
         res.json(rows);
-    // Capture et gère les erreurs.
     } catch (err) {
-        // Affiche l'erreur MySQL détaillée dans la console du serveur.
         console.error("MySQL Error:", err);
-        // Envoie une réponse d'erreur 500 (Erreur Serveur) avec un message générique.
         res.status(500).json({ error: "Erreur serveur" });
     }
 });
+
 
 // Définit la route GET pour récupérer un lien spécifique par son ID.
 // GET : récupérer un lien par son ID

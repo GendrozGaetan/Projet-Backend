@@ -44,7 +44,7 @@ app.use("/api/races", racesRouter);
 // Associe le routeur des services au chemin de base /api/services.
 app.use("/api/services", servicesRouter);
 // Associe le routeur des liens race ↔ chien au chemin de base /api/races-dogs.
-app.use("/api/races-dogs", racesDogsRouter); 
+app.use("/api/races_dogs", racesDogsRouter); 
 // Associe le routeur des maladies au chemin de base /api/diseases.
 app.use("/api/diseases", diseasesRouter)
 

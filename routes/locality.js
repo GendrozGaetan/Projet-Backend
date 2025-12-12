@@ -8,62 +8,50 @@ const localityRouter = express.Router();
 
 // Définit la route GET pour récupérer toutes les localités (avec filtrage optionnel)
 localityRouter.get('/', async (req, res) => {
-    // Début du bloc try-catch pour la gestion des erreurs
     try {
-        // Extrait les paramètres de requête (query) pour le filtrage
         const { name, postal_code, canton_code, langage_code } = req.query;
-        // Initialise la requête SQL de base
+
         let sql = "SELECT * FROM locality";
-        // Tableau pour stocker les valeurs des paramètres à lier (sécurité contre injection SQL)
         const params = [];
-        // Tableau pour stocker les clauses de condition (WHERE)
         const conditions = [];
 
-        // Vérifie si le filtre 'name' est présent
         if (name) {
-            // Ajoute une condition pour filtrer par nom (recherche partielle LIKE)
-            conditions.push("name LIKE ?");
-            // Ajoute la valeur encadrée de '%' aux paramètres
+            conditions.push("LOWER(name) LIKE LOWER(?)"); // insensible à la casse
             params.push(`%${name}%`);
         }
-        // Vérifie si le filtre 'postal_code' est présent
         if (postal_code) {
-            // Ajoute une condition pour filtrer par code postal (recherche partielle LIKE)
             conditions.push("postal_code LIKE ?");
-            // Ajoute la valeur encadrée de '%' aux paramètres
             params.push(`%${postal_code}%`);
         }
-        // Vérifie si le filtre 'canton_code' est présent
         if (canton_code) {
-            // Ajoute une condition pour filtrer par code de canton (recherche exacte)
             conditions.push("canton_code = ?");
-            // Ajoute la valeur du code de canton aux paramètres
             params.push(canton_code);
         }
-        // Vérifie si le filtre 'langage_code' est présent
         if (langage_code) {
-            // Ajoute une condition pour filtrer par code de langue (recherche exacte)
             conditions.push("langage_code = ?");
-            // Ajoute la valeur du code de langue aux paramètres
             params.push(langage_code);
         }
 
-        // Vérifie s'il y a des conditions de filtrage
         if (conditions.length > 0) {
-            // Ajoute la clause WHERE à la requête SQL, en joignant les conditions par ' AND '
             sql += " WHERE " + conditions.join(" AND ");
         }
 
-        // Exécute la requête SQL dans la base de données
         const [rows] = await pool.query(sql, params);
-        // Renvoie les résultats (les localités trouvées) au format JSON
+
+        // Si aucune localité ne correspond aux filtres
+        if (!rows || rows.length === 0) {
+            return res.status(404).json({ error: "No locality matches the provided filter(s)" });
+        }
+
+        // Sinon, renvoie les localités trouvées
         res.json(rows);
-    // Capture toute erreur
+
     } catch (err) {
-        // En cas d'erreur, renvoie une réponse HTTP 500 (Erreur Serveur)
-        res.status(500).json({ error: "Erreur serveur" });
+        console.error("MySQL Error:", err);
+        res.status(500).json({ error: "Server error" });
     }
 });
+
 
 // Définit la route GET pour récupérer une localité par son ID
 localityRouter.get('/:id', async (req, res) => {

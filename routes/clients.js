@@ -6,66 +6,72 @@ import pool from "../db/db.js";
 // Crée un nouvel objet Router Express pour gérer les routes spécifiques aux 'clients'
 const clientsRouter = express.Router();
 
-// Définit la route GET pour récupérer tous les clients (avec filtrage optionnel)
 clientsRouter.get('/', async (req, res) => {
-    // Début du bloc try-catch pour la gestion des erreurs
     try {
-        // Extrait les paramètres de requête (query) pour le filtrage
-        const { last_name, first_name, mail, locality_idlocality } = req.query;
-        // Initialise la requête SQL de base
-        let sql = "SELECT * FROM clients";
-        // Tableau pour stocker les valeurs des paramètres à lier à la requête SQL
-        const params = [];
-        // Tableau pour stocker les clauses de condition (WHERE)
-        const conditions = [];
+        const { id, last_name, first_name, mail, gender, phone, locality_idlocality } = req.query;
 
-        // Vérifie si le filtre 'last_name' est présent
-        if (last_name) {
-            // Ajoute une condition pour filtrer par nom de famille (recherche partielle LIKE)
-            conditions.push("last_name LIKE ?");
-            // Ajoute la valeur encadrée de '%'
-            params.push(`%${last_name}%`);
+        const conditions = [];
+        const params = [];
+
+        // --- Validation des paramètres numériques ---
+        if (id !== undefined) {
+            if (!Number.isInteger(Number(id)) || Number(id) <= 0) {
+                return res.status(400).json({ error: "Invalid 'id': must be a positive integer" });
+            }
+            conditions.push("idclients = ?");
+            params.push(id);
         }
-        // Vérifie si le filtre 'first_name' est présent
-        if (first_name) {
-            // Ajoute une condition pour filtrer par prénom (recherche partielle LIKE)
-            conditions.push("first_name LIKE ?");
-            // Ajoute la valeur encadrée de '%'
-            params.push(`%${first_name}%`);
-        }
-        // Vérifie si le filtre 'mail' est présent
-        if (mail) {
-            // Ajoute une condition pour filtrer par email (recherche partielle LIKE)
-            conditions.push("mail LIKE ?");
-            // Ajoute la valeur encadrée de '%'
-            params.push(`%${mail}%`);
-        }
-        // Vérifie si le filtre 'locality_idlocality' est présent
-        if (locality_idlocality) {
-            // Ajoute une condition pour filtrer par ID de localité
+
+        if (locality_idlocality !== undefined) {
+            if (!Number.isInteger(Number(locality_idlocality)) || Number(locality_idlocality) <= 0) {
+                return res.status(400).json({ error: "Invalid 'locality_idlocality': must be a positive integer" });
+            }
             conditions.push("locality_idlocality = ?");
-            // Ajoute la valeur du paramètre
             params.push(locality_idlocality);
         }
 
-        // Vérifie s'il y a des conditions de filtrage
+        // --- Validation des paramètres texte ---
+        if (last_name !== undefined) {
+            conditions.push("last_name LIKE ?");
+            params.push(`%${last_name}%`);
+        }
+        if (first_name !== undefined) {
+            conditions.push("first_name LIKE ?");
+            params.push(`%${first_name}%`);
+        }
+        if (mail !== undefined) {
+            conditions.push("mail LIKE ?");
+            params.push(`%${mail}%`);
+        }
+        if (gender !== undefined) {
+            conditions.push("gender = ?");
+            params.push(gender);
+        }
+        if (phone !== undefined) {
+            conditions.push("phone LIKE ?");
+            params.push(`${phone}%`);
+        }
+
+        // --- Construction de la requête SQL ---
+        let sql = "SELECT * FROM clients";
         if (conditions.length > 0) {
-            // Ajoute la clause WHERE à la requête SQL, en joignant les conditions par ' AND '
             sql += " WHERE " + conditions.join(" AND ");
         }
 
-        // Exécute la requête SQL dans la base de données de manière asynchrone
         const [rows] = await pool.query(sql, params);
-        // Renvoie les résultats (les clients trouvés) au format JSON
+
+        // --- Vérifie si aucune correspondance n'a été trouvée ---
+        if (rows.length === 0) {
+            return res.status(404).json({ error: "Aucun client trouvé pour les filtres donnés" });
+        }
+
         res.json(rows);
-    // Capture toute erreur
     } catch (err) {
-        // Affiche l'erreur MySQL dans la console du serveur
         console.error("MySQL Error:", err);
-        // Renvoie une réponse d'erreur HTTP 500 (Erreur Serveur)
         res.status(500).json({ error: "Erreur serveur" });
     }
 });
+
 
 // Définit la route GET pour récupérer un client par son ID
 clientsRouter.get('/:id', async (req, res) => {

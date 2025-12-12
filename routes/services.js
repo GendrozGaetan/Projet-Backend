@@ -6,74 +6,89 @@ import pool from "../db/db.js";
 // Crée un nouvel objet Router Express pour gérer les routes liées aux services.
 const servicesRouter = express.Router();
 
-// Définit la route GET pour récupérer une liste de services, avec possibilité de filtrage par champs spécifiques.
 servicesRouter.get('/', async (req, res) => {
-    // Début du bloc try-catch pour la gestion des erreurs.
     try {
-        // Extrait les paramètres de requête possibles (filtres) de l'URL.
         const { dogs_iddogs, clients_idclients, locality_idlocality, date, zone } = req.query;
 
-        // Initialise la requête SQL de base pour sélectionner toutes les colonnes de la table 'services'.
-        let sql = "SELECT * FROM services";
-        // Tableau pour stocker les conditions de filtrage de la clause WHERE.
         const conditions = [];
-        // Tableau pour stocker les valeurs des paramètres à lier à la requête SQL.
         const values = [];
 
-        // Vérifie si un filtre 'dogs_iddogs' (ID du chien) est présent.
+        // -------------------------------
+        // VALIDATION DES PARAMÈTRES
+        // -------------------------------
+
+        // dogs_iddogs : doit exister dans la table dogs
         if (dogs_iddogs) {
-            // Ajoute la condition d'égalité pour l'ID du chien.
+            const [dogRows] = await pool.query("SELECT * FROM dogs WHERE iddogs = ?", [dogs_iddogs]);
+            if (dogRows.length === 0) {
+                return res.status(400).json({ error: `Invalid 'dogs_iddogs': '${dogs_iddogs}' does not exist` });
+            }
             conditions.push("dogs_iddogs = ?");
-            // Ajoute la valeur de l'ID du chien aux paramètres.
             values.push(dogs_iddogs);
         }
-        // Vérifie si un filtre 'clients_idclients' (ID du client) est présent.
+
+        // clients_idclients : doit exister dans la table clients
         if (clients_idclients) {
-            // Ajoute la condition d'égalité pour l'ID du client.
+            const [clientRows] = await pool.query("SELECT * FROM clients WHERE idclients = ?", [clients_idclients]);
+            if (clientRows.length === 0) {
+                return res.status(400).json({ error: `Invalid 'clients_idclients': '${clients_idclients}' does not exist` });
+            }
             conditions.push("clients_idclients = ?");
-            // Ajoute la valeur de l'ID du client aux paramètres.
             values.push(clients_idclients);
         }
-        // Vérifie si un filtre 'locality_idlocality' (ID de la localité) est présent.
+
+        // locality_idlocality : doit exister dans la table locality
         if (locality_idlocality) {
-            // Ajoute la condition d'égalité pour l'ID de la localité.
+            const [localityRows] = await pool.query("SELECT * FROM locality WHERE idlocality = ?", [locality_idlocality]);
+            if (localityRows.length === 0) {
+                return res.status(400).json({ error: `Invalid 'locality_idlocality': '${locality_idlocality}' does not exist` });
+            }
             conditions.push("locality_idlocality = ?");
-            // Ajoute la valeur de l'ID de la localité aux paramètres.
             values.push(locality_idlocality);
         }
-        // Vérifie si un filtre 'date' est présent.
+
+        // date : doit être au format YYYY-MM-DD
         if (date) {
-            // Ajoute la condition d'égalité pour la date.
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+                return res.status(400).json({ error: "Invalid 'date': must be in YYYY-MM-DD format" });
+            }
             conditions.push("date = ?");
-            // Ajoute la valeur de la date aux paramètres.
             values.push(date);
         }
-        // Vérifie si un filtre 'zone' est présent.
+
+        // zone : ici on peut juste vérifier que ce n'est pas vide
         if (zone) {
-            // Ajoute la condition d'égalité pour la zone.
+            if (zone.trim() === "") {
+                return res.status(400).json({ error: "Invalid 'zone': cannot be empty" });
+            }
             conditions.push("zone = ?");
-            // Ajoute la valeur de la zone aux paramètres.
             values.push(zone);
         }
 
-        // Vérifie s'il y a des conditions de filtrage à appliquer.
-        if (conditions.length > 0) {
-            // Ajoute la clause WHERE à la requête SQL, en joignant les conditions avec ' AND '.
-            sql += " WHERE " + conditions.join(" AND ");
+        // -------------------------------
+        // CONSTRUCTION DE LA REQUÊTE SQL
+        // -------------------------------
+        let sql = "SELECT * FROM services";
+        if (conditions.length > 0) sql += " WHERE " + conditions.join(" AND ");
+
+        // -------------------------------
+        // EXÉCUTION DE LA REQUÊTE
+        // -------------------------------
+        const [rows] = await pool.query(sql, values);
+
+        // Aucun résultat correspondant → erreur 404
+        if (rows.length === 0) {
+            return res.status(404).json({ error: "No service found matching the provided filter(s)" });
         }
 
-        // Exécute la requête SQL avec les valeurs (filtres). La réponse est destucturée en [rows].
-        const [rows] = await pool.query(sql, values);
-        // Envoie la liste des résultats trouvés (rows) en réponse JSON.
         res.json(rows);
-    // Capture et gère les erreurs.
+
     } catch (err) {
-        // Affiche l'erreur MySQL détaillée dans la console du serveur.
         console.error("MySQL Error:", err);
-        // Envoie une réponse d'erreur 500 (Erreur Serveur) avec un message générique.
-        res.status(500).json({ error: "Erreur serveur" });
+        res.status(500).json({ error: "Server error" });
     }
 });
+
 
 // Définit la route GET pour récupérer un seul service par son ID.
 servicesRouter.get('/:id', async (req, res) => {

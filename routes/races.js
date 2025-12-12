@@ -6,60 +6,63 @@ import pool from "../db/db.js";
 // Crée un nouvel objet Router Express pour gérer les routes spécifiques aux 'races'
 const racesRouter = express.Router();
 
-// Définit la route GET pour récupérer toutes les races (avec filtrage optionnel)
 racesRouter.get('/', async (req, res) => {
-    // Début du bloc try-catch pour la gestion des erreurs asynchrones
     try {
-        // Extrait les paramètres de requête (query) pour le filtrage
-        const { category, classification, name } = req.query;
-        // Initialise la requête SQL de base pour sélectionner toutes les colonnes de la table 'races'
-        let sql = "SELECT * FROM races";
-        // Tableau pour stocker les valeurs des paramètres à lier à la requête SQL (pour éviter l'injection SQL)
-        const params = [];
-        // Tableau pour stocker les clauses de condition (WHERE)
+        const { category, classification, name, years } = req.query;
+
         const conditions = [];
+        const values = [];
 
-        // Vérifie si le paramètre 'category' est présent dans la requête
         if (category) {
-            // Ajoute une condition pour filtrer par catégorie
+            if (typeof category !== "string") 
+                return res.status(400).json({ error: "'category' must be a string" });
             conditions.push("category = ?");
-            // Ajoute la valeur du paramètre au tableau de params
-            params.push(category);
-        }
-        // Vérifie si le paramètre 'classification' est présent dans la requête
-        if (classification) {
-            // Ajoute une condition pour filtrer par classification
-            conditions.push("classification = ?");
-            // Ajoute la valeur du paramètre au tableau de params
-            params.push(classification);
-        }
-        // Vérifie si le paramètre 'name' est présent dans la requête
-        if (name) {
-            // Ajoute une condition pour filtrer par nom (utilisation de LIKE pour une recherche partielle)
-            conditions.push("name LIKE ?");
-            // Ajoute la valeur du paramètre, encadrée de '%' pour la recherche partielle
-            params.push(`%${name}%`);
+            values.push(category);
         }
 
-        // Vérifie s'il y a des conditions de filtrage
+        if (classification) {
+            if (typeof classification !== "string") 
+                return res.status(400).json({ error: "'classification' must be a string" });
+            conditions.push("classification = ?");
+            values.push(classification);
+        }
+
+        if (name) {
+            if (typeof name !== "string") 
+                return res.status(400).json({ error: "'name' must be a string" });
+            // On force la casse insensible pour éviter les erreurs
+            conditions.push("LOWER(name) LIKE LOWER(?)");
+            values.push(`${name}%`);
+        }
+
+        if (years) {
+            const yearsNum = parseInt(years, 10);
+            if (isNaN(yearsNum) || yearsNum < 0) 
+                return res.status(400).json({ error: "'years' must be a positive number" });
+            conditions.push("years = ?");
+            values.push(yearsNum);
+        }
+
+        let sql = "SELECT * FROM races";
         if (conditions.length > 0) {
-            // Ajoute la clause WHERE à la requête SQL, en joignant les conditions avec ' AND '
             sql += " WHERE " + conditions.join(" AND ");
         }
 
-        // Exécute la requête SQL dans la base de données de manière asynchrone
-        // Utilisation de la déstructuration pour obtenir le tableau de résultats (rows)
-        const [rows] = await pool.query(sql, params);
-        // Renvoie les résultats (les lignes récupérées) au format JSON
+        const [rows] = await pool.query(sql, values);
+
+        // Si aucune race ne correspond aux filtres, on renvoie 404
+        if (!rows || rows.length === 0) {
+            return res.status(404).json({ error: "No race matches the provided filter(s)" });
+        }
+
         res.json(rows);
-    // Capture toute erreur survenue dans le bloc try
+
     } catch (err) {
-        // Affiche l'erreur MySQL dans la console du serveur
         console.error("MySQL Error:", err);
-        // Renvoie une réponse d'erreur HTTP 500 (Erreur Serveur)
-        res.status(500).json({ error: "Erreur serveur" });
+        res.status(500).json({ error: "Server error" });
     }
 });
+
 
 // Définit la route GET pour récupérer une race par son ID
 racesRouter.get('/:id', async (req, res) => {
