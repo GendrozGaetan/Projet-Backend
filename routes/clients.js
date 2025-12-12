@@ -8,7 +8,7 @@ const clientsRouter = express.Router();
 
 clientsRouter.get('/', async (req, res) => {
     try {
-        const { id, last_name, first_name, mail, gender, phone, locality_idlocality } = req.query;
+        const { id, last_name, first_name,adress, mail, gender, phone, locality_idlocality } = req.query;
 
         const conditions = [];
         const params = [];
@@ -50,6 +50,10 @@ clientsRouter.get('/', async (req, res) => {
         if (phone !== undefined) {
             conditions.push("phone LIKE ?");
             params.push(`${phone}%`);
+        }
+        if (adress !== undefined) {
+            conditions.push("adress LIKE ?");
+            params.push(`${adress}%`)
         }
 
         // --- Construction de la requête SQL ---
