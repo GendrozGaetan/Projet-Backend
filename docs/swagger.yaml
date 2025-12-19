@@ -1,3 +1,5 @@
+# Informations générales sur le Swagger
+
 openapi: 3.0.0
 info:
   title: API Backend du Projet
@@ -6,8 +8,12 @@ info:
     Documentation complète de l'API incluant les opérations CRUD,
     les schémas de données et les exemples de requêtes et réponses.
 
+# Addresse du Swagger pour la consultation
+
 servers:
   - url: http://localhost:3003/api
+
+# Liste et informations sur les différents composants du programme et sa base de donnée
 
 components:
   schemas:
@@ -76,6 +82,9 @@ paths:
   ##############################################
 
   /clients:
+
+  # Processus pour retrouver les clients dans la base de données
+
     get:
       summary: Liste des clients
       responses:
@@ -91,6 +100,9 @@ paths:
                   phone: "0600000000"
 
     post:
+
+  # Processus pour ajouter un client à la base de données
+
       summary: Ajouter un client
       requestBody:
         required: true
@@ -107,6 +119,9 @@ paths:
           description: Client créé
 
   /clients/{id}:
+
+  # Processus pour retrouver un client précis dans la base de données
+
     get:
       summary: Récupérer un client
       parameters:
@@ -123,6 +138,8 @@ paths:
                 firstname: Alain
                 lastname: Dupont
                 email: alain@exemple.com
+
+  # Processus pour modifier un client précis dans la base de données
 
     put:
       summary: Modifier un client
@@ -143,6 +160,8 @@ paths:
       responses:
         "200": { description: Client modifié }
 
+    # Processus pour supprimer un client précis dans la base de données
+
     delete:
       summary: Supprimer un client
       parameters:
@@ -157,11 +176,16 @@ paths:
   ##############################################
 
   /dogs:
+
+  # Processus pour afficher les chiens dans la base de données
+
     get:
       summary: Liste des chiens
       responses:
         "200":
           description: Liste récupérée
+
+  # Processus pour ajouter un chien à la base de données
 
     post:
       summary: Ajouter un chien
@@ -178,6 +202,9 @@ paths:
         "201": { description: Chien créé }
 
   /dogs/{id}:
+
+  # Processus pour retrouver un chien précis dans la base de données
+
     get:
       summary: Récupérer un chien
       parameters:
@@ -187,6 +214,9 @@ paths:
       responses:
         "200":
           description: Chien trouvé
+
+  # Processus pour modifier un chien précis dans la base de données
+
 
     put:
       summary: Modifier un chien
@@ -204,6 +234,8 @@ paths:
       responses:
         "200": { description: Chien modifié }
 
+  # Processus pour supprimer un chien précis dans la base de données
+
     delete:
       summary: Supprimer un chien
       parameters:
@@ -219,10 +251,15 @@ paths:
   ##############################################
 
   /locality:
+
+  # Processus pour afficher les localités dans la base de données
+
     get:
       summary: Liste des localités
       responses:
         "200": { description: OK }
+
+  # Processus pour ajouter une localité dans la base de données
 
     post:
       summary: Ajouter une localité
@@ -235,6 +272,9 @@ paths:
         "201": { description: Créé }
 
   /locality/{id}:
+
+  # Processus pour modifier une localité précis dans la base de données
+
     put:
       summary: Modifier une localité
       parameters:
@@ -248,6 +288,8 @@ paths:
               name: Lyon
       responses:
         "200": { description: OK }
+
+  # Processus pour supprimer une localité précis dans la base de données
 
     delete:
       summary: Supprimer une localité
@@ -264,10 +306,15 @@ paths:
   ##############################################
 
   /races:
+
+  # Processus pour afficher les races de la base de données
+
     get:
       summary: Liste des races
       responses:
         "200": { description: OK }
+
+  # Processus pour ajouter une race à la base de données
 
     post:
       summary: Ajouter une race
@@ -280,6 +327,9 @@ paths:
         "201": { description: Créé }
 
   /races/{id}:
+
+  # Processus pour modifier une race précise dans la base de données
+
     put:
       summary: Modifier une race
       parameters:
@@ -293,6 +343,8 @@ paths:
               name: Bulldog
       responses:
         "200": { description: OK }
+
+  # Processus pour supprimer une race dans la base de données
 
     delete:
       summary: Supprimer une race
@@ -309,10 +361,15 @@ paths:
   ##############################################
 
   /diseases:
+
+  # Processus pour afficher les maladies de la base de données
+
     get:
       summary: Liste des maladies
       responses:
         "200": { description: OK }
+
+  # Processus pour ajouter une maladie à la base de données
 
     post:
       summary: Ajouter une maladie
@@ -326,6 +383,9 @@ paths:
         "201": { description: Créé }
 
   /diseases/{id}:
+
+  # Processus pour modifier une maladie
+
     put:
       summary: Modifier une maladie
       parameters:
@@ -340,6 +400,8 @@ paths:
               description: Infection virale.
       responses:
         "200": { description: OK }
+
+  # Processus pour supprimer une maladie
 
     delete:
       summary: Supprimer une maladie
@@ -356,10 +418,15 @@ paths:
   ##############################################
 
   /services:
+
+  # Processus pour afficher les services de la base de données
+
     get:
       summary: Liste des services
       responses:
         "200": { description: OK }
+
+  # Processus pour ajouter un service à la base de données
 
     post:
       summary: Ajouter un service
@@ -373,6 +440,9 @@ paths:
         "201": { description: Créé }
 
   /services/{id}:
+
+  # Processus pour modifier un service
+
     put:
       summary: Modifier un service
       parameters:
@@ -387,6 +457,8 @@ paths:
               price: 50.0
       responses:
         "200": { description: OK }
+
+  # Processus pour supprimer un service
 
     delete:
       summary: Supprimer un service
@@ -403,10 +475,15 @@ paths:
   ##############################################
 
   /races_dogs:
+
+  # Processus pour afficher les races de la base de données
+
     get:
       summary: Liste des associations race-chien
       responses:
         "200": { description: OK }
+
+  # Processus pour ajouter une race à la base de données
 
     post:
       summary: Associer une race à un chien
@@ -420,6 +497,9 @@ paths:
         "201": { description: Créé }
 
   /races_dogs/{id}:
+
+  # Processus pour supprimer une race
+
     delete:
       summary: Supprimer une association race-chien
       parameters:
