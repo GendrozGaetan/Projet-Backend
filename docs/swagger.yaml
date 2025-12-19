@@ -1,6 +1,6 @@
-<<<<<<< HEAD
+
 # Informations générales sur le Swagger
-=======
+
 # IMPORTANT NOTE
 # This Swagger (OpenAPI 3.0) documentation has been fully updated to strictly match
 # the actual Express.js backend implementation.
@@ -9,7 +9,7 @@
 # are aligned 1:1 with the backend routes and MySQL schema.
 #
 # This file can be safely used with Swagger UI and Postman.
->>>>>>> e91f42986aef29fa862edd1c7213273b7b135bc5
+
 
 openapi: 3.0.0
 
@@ -183,15 +183,15 @@ paths:
 
   /clients/create:
     post:
-<<<<<<< HEAD
+
 
   # Processus pour ajouter un client à la base de données
 
-      summary: Ajouter un client
-=======
+
+
       tags: [Clients]
       summary: Create a client
->>>>>>> e91f42986aef29fa862edd1c7213273b7b135bc5
+
       requestBody:
         required: true
         content:
@@ -301,12 +301,12 @@ paths:
                   age: 4
                   client_idclient: 1
 
-<<<<<<< HEAD
+
   # Processus pour ajouter un chien à la base de données
 
-=======
+
   /dogs/create:
->>>>>>> e91f42986aef29fa862edd1c7213273b7b135bc5
+
     post:
       tags: [Dogs]
       summary: Create dog
@@ -323,7 +323,7 @@ paths:
           description: Dog created
 
   /dogs/{id}:
-<<<<<<< HEAD
+
 
   # Processus pour retrouver un chien précis dans la base de données
 
@@ -340,8 +340,7 @@ paths:
   # Processus pour modifier un chien précis dans la base de données
 
 
-=======
->>>>>>> e91f42986aef29fa862edd1c7213273b7b135bc5
+
     put:
       tags: [Dogs]
       summary: Update dog
@@ -373,7 +372,7 @@ paths:
           name: id
           required: true
       responses:
-<<<<<<< HEAD
+
         "200": { description: Chien supprimé }
 
 
@@ -639,7 +638,6 @@ paths:
           required: true
       responses:
         "200": { description: Supprimé }
-=======
-        "200":
-          description: Dog deleted
->>>>>>> e91f42986aef29fa862edd1c7213273b7b135bc5
+
+
+
