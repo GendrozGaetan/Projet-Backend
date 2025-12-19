@@ -7,7 +7,7 @@ info:
     les schémas de données et les exemples de requêtes et réponses.
 
 servers:
-  - url: http://localhost:3000
+  - url: http://localhost:3003/api
 
 components:
   schemas:
