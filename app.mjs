@@ -54,6 +54,14 @@ app.use("/api/races_dogs", racesDogsRouter);
 // Associe le routeur des maladies au chemin de base /api/diseases.
 app.use("/api/diseases", diseasesRouter)
 
+
+// Gestion d'erreur de lien incorrect 
+app.use((req, res) => {
+  res.status(404).json({ 
+    error: "The link doesn't exist or the route was not found on this server." 
+  });
+});
+
 // Démarrage du serveur
 // Lance le serveur Express et le met en écoute sur le port spécifié.
 app.listen(port, () => {
