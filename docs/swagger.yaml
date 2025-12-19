@@ -2,8 +2,9 @@
 # This Swagger (OpenAPI 3.0) documentation has been fully updated to strictly match
 # the actual Express.js backend implementation.
 #
-# All endpoints, request bodies, field names, required properties, and responses
-# are aligned 1:1 with the backend routes and MySQL schema.
+# All endpoints (GET, POST, PUT, DELETE), request bodies, field names,
+# required properties, and responses are aligned 1:1 with the backend routes
+# and MySQL database schema.
 #
 # This file can be safely used with Swagger UI and Postman.
 
@@ -11,8 +12,8 @@ openapi: 3.0.0
 
 info:
   title: Project Backend API
-  version: 1.0.0
-  description: Fully synchronized Swagger documentation matching the backend implementation.
+  version: 1.0.1
+  description: Complete and synchronized API documentation with correct example values.
 
 servers:
   - url: http://localhost:3003/api
@@ -34,17 +35,18 @@ components:
           example: Alain
         gender:
           type: string
+          enum: [M, F]
           example: M
         mail:
           type: string
           format: email
-          example: alain@mail.com
+          example: alain.dupont@example.com
         phone:
           type: string
-          example: "0600000000"
+          example: "0612345678"
         adress:
           type: string
-          example: 10 rue de Paris
+          example: "10 rue de Paris, 75001 Paris"
         locality_idlocality:
           type: integer
           example: 1
@@ -68,14 +70,11 @@ components:
           example: Rex
         age:
           type: integer
-          example: 4
+          example: 5
         client_idclient:
           type: integer
           example: 1
-      required:
-        - name
-        - age
-        - client_idclient
+      required: [name, age, client_idclient]
 
     Locality:
       type: object
@@ -86,8 +85,7 @@ components:
         name:
           type: string
           example: Paris
-      required:
-        - name
+      required: [name]
 
     Race:
       type: object
@@ -98,8 +96,7 @@ components:
         name:
           type: string
           example: Labrador
-      required:
-        - name
+      required: [name]
 
     Disease:
       type: object
@@ -112,9 +109,8 @@ components:
           example: Rabies
         description:
           type: string
-          example: Serious viral disease affecting the nervous system.
-      required:
-        - name
+          example: "Viral disease affecting the nervous system"
+      required: [name]
 
     Service:
       type: object
@@ -129,9 +125,7 @@ components:
           type: number
           format: float
           example: 35.0
-      required:
-        - name
-        - price
+      required: [name, price]
 
     RaceDog:
       type: object
@@ -145,9 +139,7 @@ components:
         race_idrace:
           type: integer
           example: 2
-      required:
-        - dog_iddog
-        - race_idrace
+      required: [dog_iddog, race_idrace]
 
 paths:
 
@@ -165,9 +157,9 @@ paths:
                   last_name: Dupont
                   first_name: Alain
                   gender: M
-                  mail: alain@mail.com
-                  phone: "0600000000"
-                  adress: 10 rue de Paris
+                  mail: alain.dupont@example.com
+                  phone: "0612345678"
+                  adress: "10 rue de Paris, 75001 Paris"
                   locality_idlocality: 1
 
   /clients/create:
@@ -179,24 +171,16 @@ paths:
         content:
           application/json:
             example:
-              last_name: Dupont
-              first_name: Alain
-              gender: M
-              mail: alain@mail.com
-              phone: "0600000000"
-              adress: 10 rue de Paris
-              locality_idlocality: 1
+              last_name: Martin
+              first_name: Pauline
+              gender: F
+              mail: pauline.martin@example.com
+              phone: "0698765432"
+              adress: "5 avenue Victor Hugo, 69003 Lyon"
+              locality_idlocality: 2
       responses:
         "201":
           description: Client created
-          content:
-            application/json:
-              example:
-                message: Client created successfully
-                client:
-                  id: 1
-                  last_name: Dupont
-                  first_name: Alain
 
   /clients/{id}:
     get:
@@ -206,19 +190,10 @@ paths:
         - in: path
           name: id
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
       responses:
         "200":
           description: Client found
-          content:
-            application/json:
-              example:
-                id: 1
-                last_name: Dupont
-                first_name: Alain
-                gender: M
-                mail: alain@mail.com
 
     put:
       tags: [Clients]
@@ -227,20 +202,19 @@ paths:
         - in: path
           name: id
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
       requestBody:
         required: true
         content:
           application/json:
             example:
-              last_name: Martin
-              first_name: Paul
+              last_name: Durand
+              first_name: Michel
               gender: M
-              mail: paul@mail.com
-              phone: "0611111111"
-              adress: 5 avenue Victor Hugo
-              locality_idlocality: 2
+              mail: michel.durand@example.com
+              phone: "0622334455"
+              adress: "12 rue Lafayette, 75009 Paris"
+              locality_idlocality: 1
       responses:
         "200":
           description: Client updated
@@ -252,8 +226,7 @@ paths:
         - in: path
           name: id
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
       responses:
         "200":
           description: Client deleted
@@ -265,13 +238,6 @@ paths:
       responses:
         "200":
           description: Dogs list
-          content:
-            application/json:
-              example:
-                - id: 1
-                  name: Rex
-                  age: 4
-                  client_idclient: 1
 
   /dogs/create:
     post:
@@ -282,8 +248,8 @@ paths:
         content:
           application/json:
             example:
-              name: Rex
-              age: 4
+              name: Buddy
+              age: 3
               client_idclient: 1
       responses:
         "201":
@@ -297,15 +263,14 @@ paths:
         - in: path
           name: id
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
       requestBody:
         required: true
         content:
           application/json:
             example:
               name: Rocky
-              age: 3
+              age: 4
               client_idclient: 2
       responses:
         "200":
@@ -318,6 +283,278 @@ paths:
         - in: path
           name: id
           required: true
+          schema: { type: integer }
       responses:
         "200":
           description: Dog deleted
+
+  /locality:
+    get:
+      tags: [Locality]
+      summary: Get all localities
+      responses:
+        "200":
+          description: Localities list
+
+  /locality/create:
+    post:
+      tags: [Locality]
+      summary: Create locality
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              name: Lyon
+      responses:
+        "201":
+          description: Locality created
+
+  /locality/{id}:
+    put:
+      tags: [Locality]
+      summary: Update locality
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              name: Marseille
+      responses:
+        "200":
+          description: Locality updated
+
+    delete:
+      tags: [Locality]
+      summary: Delete locality
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Locality deleted
+
+  /races:
+    get:
+      tags: [Races]
+      summary: Get all races
+      responses:
+        "200":
+          description: Races list
+
+  /races/create:
+    post:
+      tags: [Races]
+      summary: Create race
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              name: Labrador
+      responses:
+        "201":
+          description: Race created
+
+  /races/{id}:
+    put:
+      tags: [Races]
+      summary: Update race
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              name: Beagle
+      responses:
+        "200":
+          description: Race updated
+
+    delete:
+      tags: [Races]
+      summary: Delete race
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Race deleted
+
+  /diseases:
+    get:
+      tags: [Diseases]
+      summary: Get all diseases
+      responses:
+        "200":
+          description: Diseases list
+
+  /diseases/create:
+    post:
+      tags: [Diseases]
+      summary: Create disease
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              name: Distemper
+              description: "Highly contagious viral disease in dogs"
+      responses:
+        "201":
+          description: Disease created
+
+  /diseases/{id}:
+    put:
+      tags: [Diseases]
+      summary: Update disease
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              name: Parvovirus
+              description: "Contagious viral infection causing severe gastrointestinal symptoms"
+      responses:
+        "200":
+          description: Disease updated
+
+    delete:
+      tags: [Diseases]
+      summary: Delete disease
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Disease deleted
+
+  /services:
+    get:
+      tags: [Services]
+      summary: Get all services
+      responses:
+        "200":
+          description: Services list
+
+  /services/create:
+    post:
+      tags: [Services]
+      summary: Create service
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              name: Grooming
+              price: 40.0
+      responses:
+        "201":
+          description: Service created
+
+  /services/{id}:
+    put:
+      tags: [Services]
+      summary: Update service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              name: Boarding
+              price: 50.0
+      responses:
+        "200":
+          description: Service updated
+
+    delete:
+      tags: [Services]
+      summary: Delete service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Service deleted
+
+  /races_dogs:
+    get:
+      tags: [RaceDog]
+      summary: Get race-dog associations
+      responses:
+        "200":
+          description: Associations list
+
+  /races_dogs/create:
+    post:
+      tags: [RaceDog]
+      summary: Create race-dog association
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              dog_iddog: 1
+              race_idrace: 1
+      responses:
+        "201":
+          description: Association created
+
+  /races_dogs/{id}:
+    put:
+      tags: [RaceDog]
+      summary: Update race-dog association
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              dog_iddog: 2
+              race_idrace: 2
+      responses:
+        "200":
+          description: Association updated
+
+    delete:
+      tags: [RaceDog]
+      summary: Delete race-dog association
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Association deleted
