@@ -1,275 +1,173 @@
-
-// Importe le framework Express
+// Importation du framework Express
 import express from "express";
-// Importe l'objet de connexion à la base de données (pool de connexions)
+// Importation de la connexion à la base de données (pool de connexions)
 import pool from "../db/db.js";
 
-// Crée un nouvel objet Router Express pour gérer les routes spécifiques aux 'localities'
+// Initialisation du routeur Express pour isoler les routes des localités
 const localityRouter = express.Router();
 
-// Définit la route GET pour récupérer toutes les localités (avec filtrage optionnel)
-
-// Importation du framework Express pour créer des routes HTTP
-import express from "express";
-
-// Importation du pool de connexion à la base de données MySQL
-import pool from "../db/db.js";
-
-// Fonction utilitaire pour vérifier qu’un ID est valide
-// doit être un nombre, un entier, et strictement supérieur à 0
+/**
+ * Fonction utilitaire pour valider les identifiants (ID)
+ * Elle vérifie que l'ID est un nombre, que c'est un entier, et qu'il est supérieur à 0.
+ */
 const isValidId = (id) => !isNaN(id) && Number.isInteger(Number(id)) && Number(id) > 0;
 
-// --- Route GET : récupérer toutes les localités ---
-
-// Définition d’une route GET sur "/" pour récupérer toutes les localités
-
+// --- ROUTE GET : Récupérer toutes les localités de la base de données ---
 localityRouter.get('/', async (req, res) => {
-
-    // Début du bloc try pour gérer les erreurs
     try {
-
-        // Exécution d’une requête SQL pour récupérer toutes les localités
+        // Exécution de la requête SQL de sélection
         const [rows] = await pool.query("SELECT * FROM locality");
-
-        // Envoi des résultats au client au format JSON
+        // Renvoi des résultats au format JSON avec un statut 200 par défaut
         res.json(rows);
-
-    // Capture des erreurs éventuelles
     } catch (err) {
-
-        // Affichage de l’erreur dans la console serveur
+        // Affichage de l'erreur dans la console du serveur pour le débogage
         console.error("Database Error:", err);
-
-        // Réponse HTTP 500 en cas d’erreur serveur
+        // Réponse en cas d'erreur serveur avec un code 500
         res.status(500).json({ error: "Erreur serveur lors de la récupération des localités." });
     }
 });
 
-// --- Route GET : récupérer une localité par son ID ---
-
-// Définition d’une route GET avec un paramètre dynamique ":id"
+// --- ROUTE GET : Récupérer une localité spécifique par son ID ---
 localityRouter.get('/:id', async (req, res) => {
-
-    // Début du bloc try
     try {
-
-        // Récupération de l’ID depuis les paramètres de l’URL
+        // Extraction de l'ID depuis les paramètres de l'URL
         const { id } = req.params;
 
-        // Vérification que l’ID est valide
+        // Validation de l'ID avant d'interroger la base de données
         if (!isValidId(id)) {
-
-            // Retour d’une erreur 400 si l’ID est invalide
+            // Si l'ID est invalide (ex: texte ou négatif), on renvoie une erreur 400
             return res.status(400).json({ 
                 error: "Format d'ID invalide", 
-                message: "L'identifiant de la localité doit être un nombre entier positif (supérieur à 0)." 
+                message: "L'identifiant doit être un nombre entier positif (supérieur à 0)." 
             });
         }
 
-        // Requête SQL pour récupérer la localité correspondant à l’ID
-        const [rows] = await pool.query(
-            "SELECT * FROM locality WHERE idlocality = ?", 
-            [id]
-        );
+        // Requête SQL sécurisée avec un paramètre préparé (?) pour éviter les injections SQL
+        const [rows] = await pool.query("SELECT * FROM locality WHERE idlocality = ?", [id]);
         
-        // Si aucune localité n’est trouvée
+        // Vérification si la base de données a trouvé une correspondance
         if (rows.length === 0) {
-
-            // Retour d’une erreur 404
+            // Si aucun résultat, renvoi d'une erreur 404 (Non trouvé)
             return res.status(404).json({ 
                 error: "Localité non trouvée", 
                 message: `Aucune localité n'existe avec l'ID ${id}.` 
             });
         }
-
-        // Envoi de la localité trouvée au client
+        // Renvoi de la première ligne trouvée (l'objet localité)
         res.json(rows[0]);
-
-    // Gestion des erreurs
     } catch (err) {
-
-        // Affichage de l’erreur dans la console
         console.error("Database Error:", err);
-
-        // Réponse HTTP 500
-        res.status(500).json({ error: "Erreur lors de la recherche de la localité." });
+        res.status(500).json({ error: "Erreur serveur lors de la recherche." });
     }
 });
 
-// --- Route POST : ajouter une nouvelle localité ---
-
-// Définition d’une route POST pour créer une localité
+// --- ROUTE POST : Créer une ou plusieurs localités ---
 localityRouter.post('/create', async (req, res) => {
-
-    // Début du bloc try
     try {
+        // Récupération des données envoyées dans le corps de la requête
+        const data = req.body;
 
-        // Récupération des données envoyées dans le body de la requête
-        const { 
-            name, 
-            postal_code, 
-            postal_comp, 
-            toponyme, 
-            canton_code, 
-            langage_code 
-        } = req.body;
+        // Gestion de l'insertion en masse si les données sont un tableau (Array)
+        if (Array.isArray(data)) {
+            // Transformation du tableau d'objets en tableau de tableaux pour MySQL
+            const values = data.map(l => [
+                l.name, l.postal_code, l.postal_comp, l.toponyme, l.canton_code, l.langage_code
+            ]);
 
-        // Vérification que les champs obligatoires sont présents
+            // Requête SQL pour insertion multiple
+            const sql = `INSERT INTO locality (name, postal_code, postal_comp, toponyme, canton_code, langage_code) VALUES ?`;
+            // Exécution de l'insertion groupée
+            const [result] = await pool.query(sql, [values]);
+
+            // Réponse confirmant le nombre de lignes ajoutées
+            return res.status(201).json({
+                message: `${result.affectedRows} localités ajoutées avec succès !`,
+                count: result.affectedRows
+            });
+        } 
+
+        // Gestion de l'insertion d'un seul objet (si ce n'est pas un tableau)
+        const { name, postal_code, postal_comp, toponyme, canton_code, langage_code } = data;
+        
+        // Vérification des champs obligatoires (nom et code postal)
         if (!name || !postal_code) {
-
-            // Retour d’une erreur 400 si des données sont manquantes
             return res.status(400).json({ 
                 error: "Données manquantes", 
-                message: "Les champs 'name' et 'postal_code' sont requis." 
+                message: "Le nom et le code postal sont obligatoires." 
             });
         }
 
-        // Requête SQL pour insérer une nouvelle localité
-        const sql = `
-            INSERT INTO locality 
-            (name, postal_code, postal_comp, toponyme, canton_code, langage_code) 
-            VALUES (?, ?, ?, ?, ?, ?)
-        `;
+        // Requête SQL d'insertion classique
+        const sql = `INSERT INTO locality (name, postal_code, postal_comp, toponyme, canton_code, langage_code) VALUES (?, ?, ?, ?, ?, ?)`;
+        // Exécution de la requête
+        const [result] = await pool.query(sql, [name, postal_code, postal_comp, toponyme, canton_code, langage_code]);
 
-        // Exécution de la requête avec les valeurs fournies
-        const [result] = await pool.query(sql, [
-            name, 
-            postal_code, 
-            postal_comp, 
-            toponyme, 
-            canton_code, 
-            langage_code
-        ]);
-        
-        // Réponse HTTP 201 (création réussie)
+        // Réponse avec le statut 201 (Créé) et les détails de la nouvelle localité
         res.status(201).json({
-            message: `La localité ${name} a été ajoutée avec succès !`,
-            locality: { 
-                id: result.insertId, 
-                name, 
-                postal_code, 
-                postal_comp, 
-                toponyme, 
-                canton_code, 
-                langage_code 
-            }
+            message: `Localité ${name} ajoutée avec succès !`,
+            locality: { id: result.insertId, name, postal_code, postal_comp, toponyme, canton_code, langage_code }
         });
 
-    // Gestion des erreurs SQL ou serveur
     } catch (err) {
-
-        // Affichage de l’erreur
         console.error("Database Error:", err);
-
-        // Réponse HTTP 500
-        res.status(500).json({ error: "Échec de la création de la localité." });
+        res.status(500).json({ error: "Erreur lors de la création de la localité (vérifiez les contraintes SQL)." });
     }
 });
 
-// --- Route PUT : modifier une localité existante ---
-
-// Définition d’une route PUT pour mettre à jour une localité
+// --- ROUTE PUT : Modifier une localité existante via son ID ---
 localityRouter.put('/:id', async (req, res) => {
-
-    // Début du bloc try
     try {
-
-        // Récupération de l’ID depuis l’URL
         const { id } = req.params;
 
-        // Récupération des nouvelles données depuis le body
-        const { 
-            name, 
-            postal_code, 
-            postal_comp, 
-            toponyme, 
-            canton_code, 
-            langage_code 
-        } = req.body;
-
-        // Vérification que l’ID est valide
+        // Validation de l'ID fourni dans l'URL
         if (!isValidId(id)) {
-
-            // Retour erreur 400
             return res.status(400).json({ 
                 error: "Format d'ID invalide", 
                 message: "L'identifiant doit être un nombre entier positif." 
             });
         }
 
-        // Requête SQL de mise à jour de la localité
-        const sql = `
-            UPDATE locality 
-            SET name=?, postal_code=?, postal_comp=?, toponyme=?, canton_code=?, langage_code=? 
-            WHERE idlocality=?
-        `;
+        // Extraction des nouvelles données depuis le corps de la requête
+        const { name, postal_code, postal_comp, toponyme, canton_code, langage_code } = req.body;
+        // Requête SQL de mise à jour
+        const sql = `UPDATE locality SET name=?, postal_code=?, postal_comp=?, toponyme=?, canton_code=?, langage_code=? WHERE idlocality=?`;
+        // Exécution de la mise à jour
+        const [result] = await pool.query(sql, [name, postal_code, postal_comp, toponyme, canton_code, langage_code, id]);
 
-        // Exécution de la requête
-        const [result] = await pool.query(sql, [
-            name, 
-            postal_code, 
-            postal_comp, 
-            toponyme, 
-            canton_code, 
-            langage_code, 
-            id
-        ]);
-
-        // Si aucune ligne n’a été modifiée
+        // Vérification si une ligne a effectivement été modifiée
         if (result.affectedRows === 0) {
-
-            // Retour erreur 404
             return res.status(404).json({ 
                 error: "Mise à jour impossible", 
-                message: "Cette localité n'existe pas dans la base de données." 
+                message: "Cette localité n'existe pas." 
             });
         }
 
         // Réponse de succès
-        res.json({ message: "La localité a été mise à jour avec succès." });
-
-    // Gestion des erreurs
+        res.json({ message: "Localité mise à jour avec succès." });
     } catch (err) {
-
-        // Affichage de l’erreur
         console.error("Database Error:", err);
-
-        // Réponse HTTP 500
-        res.status(500).json({ error: "Erreur lors de la modification des données." });
+        res.status(500).json({ error: "Erreur lors de la modification de la localité." });
     }
 });
 
-// --- Route DELETE : supprimer une localité ---
-
-// Définition d’une route DELETE pour supprimer une localité
+// --- ROUTE DELETE : Supprimer une localité via son ID ---
 localityRouter.delete('/:id', async (req, res) => {
-
-    // Début du bloc try
     try {
-
-        // Récupération de l’ID depuis l’URL
         const { id } = req.params;
 
-        // Vérification que l’ID est valide
+        // Validation de l'ID
         if (!isValidId(id)) {
-
-            // Retour erreur 400
             return res.status(400).json({ 
                 error: "Format d'ID invalide", 
-                message: "L'identifiant doit être un nombre entier positif." 
+                message: "L'identifiant doit être un nombre entier positif pour la suppression." 
             });
         }
 
         // Requête SQL de suppression
-        const [result] = await pool.query(
-            "DELETE FROM locality WHERE idlocality = ?", 
-            [id]
-        );
-
-        // Si aucune localité n’a été supprimée
+        const [result] = await pool.query("DELETE FROM locality WHERE idlocality = ?", [id]);
+        
+        // Vérification si une ligne a été supprimée
         if (result.affectedRows === 0) {
-
-            // Retour erreur 404
             return res.status(404).json({ 
                 error: "Suppression impossible", 
                 message: "Cette localité n'existe pas." 
@@ -277,18 +175,13 @@ localityRouter.delete('/:id', async (req, res) => {
         }
 
         // Réponse de succès
-        res.json({ message: "La localité a été supprimée avec succès." });
-
-    // Gestion des erreurs
+        res.json({ message: "Localité supprimée avec succès." });
     } catch (err) {
-
-        // Affichage de l’erreur
         console.error("Database Error:", err);
-
-        // Réponse HTTP 500
-        res.status(500).json({ error: "Erreur lors de la suppression." });
+        // Note : Souvent l'erreur ici arrive si la localité est liée à un client (clé étrangère)
+        res.status(500).json({ error: "Erreur lors de la suppression (vérifiez si elle est liée à d'autres données)." });
     }
 });
 
-// Exportation du routeur pour l’utiliser dans l’application principale
+// Exportation du routeur pour qu'il soit utilisable dans app.mjs
 export { localityRouter };
