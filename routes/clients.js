@@ -4,6 +4,7 @@ import express from "express";
 // Importe l'objet de connexion à la base de données (pool de connexions)
 import pool from "../db/db.js";
 
+
 // Crée un nouvel objet Router Express pour gérer les routes spécifiques aux 'clients'
 const clientsRouter = express.Router();
 
@@ -12,9 +13,6 @@ import express from "express";
 
 // Importation du pool de connexion à la base de données MySQL
 import pool from "../db/db.js";
-
-// Création d’un routeur Express dédié aux clients
-const clientsRouter = express.Router();
 
 /**
  * HELPER: isValidId
@@ -30,18 +28,15 @@ const isValidId = (id) => !isNaN(id) && Number.isInteger(Number(id)) && Number(i
 // Définition d’une route GET sur "/" pour récupérer tous les clients
 
 clientsRouter.get('/', async (req, res) => {
-
-    // Début du bloc try pour gérer les erreurs
     try {
-        const { id, last_name, first_name,adress, mail, gender, phone, locality_idlocality } = req.query;
+        const { id, last_name, first_name, adress, mail, gender, phone, locality_idlocality } = req.query;
 
         const conditions = [];
         const params = [];
 
-        // --- Validation des paramètres numériques ---
         if (id !== undefined) {
             if (!Number.isInteger(Number(id)) || Number(id) <= 0) {
-                return res.status(400).json({ error: "Invalid 'id': must be a positive integer" });
+                return res.status(400).json({ error: "Invalid 'id'" });
             }
             conditions.push("idclients = ?");
             params.push(id);
@@ -49,39 +44,42 @@ clientsRouter.get('/', async (req, res) => {
 
         if (locality_idlocality !== undefined) {
             if (!Number.isInteger(Number(locality_idlocality)) || Number(locality_idlocality) <= 0) {
-                return res.status(400).json({ error: "Invalid 'locality_idlocality': must be a positive integer" });
+                return res.status(400).json({ error: "Invalid 'locality_idlocality'" });
             }
             conditions.push("locality_idlocality = ?");
             params.push(locality_idlocality);
         }
 
-        // --- Validation des paramètres texte ---
-        if (last_name !== undefined) {
+        if (last_name) {
             conditions.push("last_name LIKE ?");
             params.push(`%${last_name}%`);
         }
-        if (first_name !== undefined) {
+
+        if (first_name) {
             conditions.push("first_name LIKE ?");
             params.push(`%${first_name}%`);
         }
-        if (mail !== undefined) {
+
+        if (mail) {
             conditions.push("mail LIKE ?");
             params.push(`%${mail}%`);
         }
-        if (gender !== undefined) {
+
+        if (gender) {
             conditions.push("gender = ?");
             params.push(gender);
         }
-        if (phone !== undefined) {
+
+        if (phone) {
             conditions.push("phone LIKE ?");
             params.push(`${phone}%`);
         }
-        if (adress !== undefined) {
+
+        if (adress) {
             conditions.push("adress LIKE ?");
-            params.push(`${adress}%`)
+            params.push(`${adress}%`);
         }
 
-        // --- Construction de la requête SQL ---
         let sql = "SELECT * FROM clients";
         if (conditions.length > 0) {
             sql += " WHERE " + conditions.join(" AND ");
@@ -89,24 +87,18 @@ clientsRouter.get('/', async (req, res) => {
 
         const [rows] = await pool.query(sql, params);
 
-        // --- Vérifie si aucune correspondance n'a été trouvée ---
         if (rows.length === 0) {
-            return res.status(404).json({ error: "Aucun client trouvé pour les filtres donnés" });
+            return res.status(404).json({ error: "Aucun client trouvé" });
         }
 
-
-        // Exécution d’une requête SQL pour récupérer tous les clients
-        const [rows] = await pool.query("SELECT * FROM clients");
-
-        // Envoi des résultats au client au format JSON
         res.json(rows);
 
-    // Capture des erreurs éventuelles
     } catch (err) {
-        console.error("MySQL Error:", err);
+        console.error("Database Error:", err);
         res.status(500).json({ error: "Erreur serveur" });
     }
 });
+
 
 
 // Définit la route GET pour récupérer un client par son ID

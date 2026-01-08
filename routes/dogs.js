@@ -15,9 +15,6 @@ import express from "express";
 // Importation du pool de connexion à la base de données MySQL
 import pool from "../db/db.js";
 
-// Création d’un routeur Express dédié aux chiens
-const dogsRouter = express.Router();
-
 /**
  * HELPER: isValidId
  * Vérifie que l’ID est :
@@ -262,16 +259,24 @@ export { dogsRouter };
         res.json(rows);
 
     // Capture des erreurs éventuelles
+    try {
+        // Exécution d’une requête SQL pour récupérer tous les chiens
+        const [rows] = await pool.query("SELECT * FROM dogs");
+    
+        // Envoi des résultats au client au format JSON
+        res.json(rows);
+    
     } catch (err) {
-
+    
         // Affichage de l’erreur dans la console serveur
         console.error("Database Error:", err);
-
+    
         // Réponse HTTP 500 en cas d’erreur serveur
-        res.status(500).json({ error: "Erreur serveur lors de la récupération des chiens." });
+        res.status(500).json({
+            error: "Erreur serveur lors de la récupération des chiens."
+        });
     }
-});
-
+    
 // --- Route GET : récupérer un chien par son ID ---
 
 // Définition d’une route GET avec un paramètre dynamique ":id"

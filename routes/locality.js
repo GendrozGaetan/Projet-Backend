@@ -15,9 +15,6 @@ import express from "express";
 // Importation du pool de connexion à la base de données MySQL
 import pool from "../db/db.js";
 
-// Création d’un routeur Express dédié aux localités
-const localityRouter = express.Router();
-
 // Fonction utilitaire pour vérifier qu’un ID est valide
 // doit être un nombre, un entier, et strictement supérieur à 0
 const isValidId = (id) => !isNaN(id) && Number.isInteger(Number(id)) && Number(id) > 0;
