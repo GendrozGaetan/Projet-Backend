@@ -25,6 +25,27 @@ app.use("/api/locality", localityRouter);
 app.use("/api/races", racesRouter);
 app.use("/api/services", servicesRouter);
 
+// --- ADDED: 404 CATCH-ALL ---
+// This handles any URL that doesn't exist
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    error: "Route introuvable",
+    message: `L'URL '${req.originalUrl}' n'existe pas. Vérifiez l'orthographe ou la méthode HTTP.`
+  });
+});
+
+// --- ADDED: GLOBAL ERROR HANDLER ---
+// This handles internal code crashes (500 errors) in JSON format
+app.use((err, req, res, next) => {
+  console.error(err.stack); // Logs the error in your terminal
+  res.status(500).json({
+    success: false,
+    error: "Erreur Serveur",
+    message: err.message || "Une erreur interne est survenue."
+  });
+});
+
 // Démarrage du serveur
 app.listen(port, () => {
   console.log(`Server listening on http://localhost:${port}`);
