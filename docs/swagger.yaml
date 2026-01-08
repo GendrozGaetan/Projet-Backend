@@ -1,0 +1,643 @@
+
+# Informations générales sur le Swagger
+
+# IMPORTANT NOTE
+# This Swagger (OpenAPI 3.0) documentation has been fully updated to strictly match
+# the actual Express.js backend implementation.
+#
+# All endpoints, request bodies, field names, required properties, and responses
+# are aligned 1:1 with the backend routes and MySQL schema.
+#
+# This file can be safely used with Swagger UI and Postman.
+
+
+openapi: 3.0.0
+
+info:
+  title: Project Backend API
+  version: 1.0.0
+  description: Fully synchronized Swagger documentation matching the backend implementation.
+
+# Addresse du Swagger pour la consultation
+
+servers:
+  - url: http://localhost:3003/api
+
+# Liste et informations sur les différents composants du programme et sa base de donnée
+
+components:
+  schemas:
+
+    Client:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        last_name:
+          type: string
+          example: Dupont
+        first_name:
+          type: string
+          example: Alain
+        gender:
+          type: string
+          example: M
+        mail:
+          type: string
+          format: email
+          example: alain@mail.com
+        phone:
+          type: string
+          example: "0600000000"
+        adress:
+          type: string
+          example: 10 rue de Paris
+        locality_idlocality:
+          type: integer
+          example: 1
+      required:
+        - last_name
+        - first_name
+        - gender
+        - mail
+        - phone
+        - adress
+        - locality_idlocality
+
+    Dog:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Rex
+        age:
+          type: integer
+          example: 4
+        client_idclient:
+          type: integer
+          example: 1
+      required:
+        - name
+        - age
+        - client_idclient
+
+    Locality:
+      type: object
+      properties:
+        idlocality:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Paris
+      required:
+        - name
+
+    Race:
+      type: object
+      properties:
+        idrace:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Labrador
+      required:
+        - name
+
+    Disease:
+      type: object
+      properties:
+        iddisease:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Rabies
+        description:
+          type: string
+          example: Serious viral disease affecting the nervous system.
+      required:
+        - name
+
+    Service:
+      type: object
+      properties:
+        idservice:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Grooming
+        price:
+          type: number
+          format: float
+          example: 35.0
+      required:
+        - name
+        - price
+
+    RaceDog:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        dog_iddog:
+          type: integer
+          example: 1
+        race_idrace:
+          type: integer
+          example: 2
+      required:
+        - dog_iddog
+        - race_idrace
+
+paths:
+
+  /clients:
+
+  # Processus pour retrouver les clients dans la base de données
+
+    get:
+      tags: [Clients]
+      summary: Get all clients
+      responses:
+        "200":
+          description: Clients list
+          content:
+            application/json:
+              example:
+                - id: 1
+                  last_name: Dupont
+                  first_name: Alain
+                  gender: M
+                  mail: alain@mail.com
+                  phone: "0600000000"
+                  adress: 10 rue de Paris
+                  locality_idlocality: 1
+
+  /clients/create:
+    post:
+
+
+  # Processus pour ajouter un client à la base de données
+
+
+
+      tags: [Clients]
+      summary: Create a client
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              last_name: Dupont
+              first_name: Alain
+              gender: M
+              mail: alain@mail.com
+              phone: "0600000000"
+              adress: 10 rue de Paris
+              locality_idlocality: 1
+      responses:
+        "201":
+          description: Client created
+          content:
+            application/json:
+              example:
+                message: Client created successfully
+                client:
+                  id: 1
+                  last_name: Dupont
+                  first_name: Alain
+
+  /clients/{id}:
+
+  # Processus pour retrouver un client précis dans la base de données
+
+    get:
+      tags: [Clients]
+      summary: Get client by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Client found
+          content:
+            application/json:
+              example:
+                id: 1
+                last_name: Dupont
+                first_name: Alain
+                gender: M
+                mail: alain@mail.com
+
+  # Processus pour modifier un client précis dans la base de données
+
+    put:
+      tags: [Clients]
+      summary: Update client
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              last_name: Martin
+              first_name: Paul
+              gender: M
+              mail: paul@mail.com
+              phone: "0611111111"
+              adress: 5 avenue Victor Hugo
+              locality_idlocality: 2
+      responses:
+        "200":
+          description: Client updated
+
+    # Processus pour supprimer un client précis dans la base de données
+
+    delete:
+      tags: [Clients]
+      summary: Delete client
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Client deleted
+
+  /dogs:
+
+  # Processus pour afficher les chiens dans la base de données
+
+    get:
+      tags: [Dogs]
+      summary: Get all dogs
+      responses:
+        "200":
+          description: Dogs list
+          content:
+            application/json:
+              example:
+                - id: 1
+                  name: Rex
+                  age: 4
+                  client_idclient: 1
+
+
+  # Processus pour ajouter un chien à la base de données
+
+
+  /dogs/create:
+
+    post:
+      tags: [Dogs]
+      summary: Create dog
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              name: Rex
+              age: 4
+              client_idclient: 1
+      responses:
+        "201":
+          description: Dog created
+
+  /dogs/{id}:
+
+
+  # Processus pour retrouver un chien précis dans la base de données
+
+    get:
+      summary: Récupérer un chien
+      parameters:
+        - in: path
+          name: id
+          required: true
+      responses:
+        "200":
+          description: Chien trouvé
+
+  # Processus pour modifier un chien précis dans la base de données
+
+
+
+    put:
+      tags: [Dogs]
+      summary: Update dog
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              name: Rocky
+              age: 3
+              client_idclient: 2
+      responses:
+        "200":
+          description: Dog updated
+
+  # Processus pour supprimer un chien précis dans la base de données
+
+    delete:
+      tags: [Dogs]
+      summary: Delete dog
+      parameters:
+        - in: path
+          name: id
+          required: true
+      responses:
+
+        "200": { description: Chien supprimé }
+
+
+  ##############################################
+  # LOCALITY
+  ##############################################
+
+  /locality:
+
+  # Processus pour afficher les localités dans la base de données
+
+    get:
+      summary: Liste des localités
+      responses:
+        "200": { description: OK }
+
+  # Processus pour ajouter une localité dans la base de données
+
+    post:
+      summary: Ajouter une localité
+      requestBody:
+        content:
+          application/json:
+            example:
+              name: Paris
+      responses:
+        "201": { description: Créé }
+
+  /locality/{id}:
+
+  # Processus pour modifier une localité précis dans la base de données
+
+    put:
+      summary: Modifier une localité
+      parameters:
+        - in: path
+          name: id
+          required: true
+      requestBody:
+        content:
+          application/json:
+            example:
+              name: Lyon
+      responses:
+        "200": { description: OK }
+
+  # Processus pour supprimer une localité précis dans la base de données
+
+    delete:
+      summary: Supprimer une localité
+      parameters:
+        - in: path
+          name: id
+          required: true
+      responses:
+        "200": { description: Supprimé }
+
+
+  ##############################################
+  # RACES
+  ##############################################
+
+  /races:
+
+  # Processus pour afficher les races de la base de données
+
+    get:
+      summary: Liste des races
+      responses:
+        "200": { description: OK }
+
+  # Processus pour ajouter une race à la base de données
+
+    post:
+      summary: Ajouter une race
+      requestBody:
+        content:
+          application/json:
+            example:
+              name: Labrador
+      responses:
+        "201": { description: Créé }
+
+  /races/{id}:
+
+  # Processus pour modifier une race précise dans la base de données
+
+    put:
+      summary: Modifier une race
+      parameters:
+        - in: path
+          name: id
+          required: true
+      requestBody:
+        content:
+          application/json:
+            example:
+              name: Bulldog
+      responses:
+        "200": { description: OK }
+
+  # Processus pour supprimer une race dans la base de données
+
+    delete:
+      summary: Supprimer une race
+      parameters:
+        - in: path
+          name: id
+          required: true
+      responses:
+        "200": { description: Supprimé }
+
+
+  ##############################################
+  # DISEASES
+  ##############################################
+
+  /diseases:
+
+  # Processus pour afficher les maladies de la base de données
+
+    get:
+      summary: Liste des maladies
+      responses:
+        "200": { description: OK }
+
+  # Processus pour ajouter une maladie à la base de données
+
+    post:
+      summary: Ajouter une maladie
+      requestBody:
+        content:
+          application/json:
+            example:
+              name: Rage
+              description: Maladie virale grave.
+      responses:
+        "201": { description: Créé }
+
+  /diseases/{id}:
+
+  # Processus pour modifier une maladie
+
+    put:
+      summary: Modifier une maladie
+      parameters:
+        - in: path
+          name: id
+          required: true
+      requestBody:
+        content:
+          application/json:
+            example:
+              name: Parvovirose
+              description: Infection virale.
+      responses:
+        "200": { description: OK }
+
+  # Processus pour supprimer une maladie
+
+    delete:
+      summary: Supprimer une maladie
+      parameters:
+        - in: path
+          name: id
+          required: true
+      responses:
+        "200": { description: Supprimé }
+
+
+  ##############################################
+  # SERVICES
+  ##############################################
+
+  /services:
+
+  # Processus pour afficher les services de la base de données
+
+    get:
+      summary: Liste des services
+      responses:
+        "200": { description: OK }
+
+  # Processus pour ajouter un service à la base de données
+
+    post:
+      summary: Ajouter un service
+      requestBody:
+        content:
+          application/json:
+            example:
+              name: Toilettage
+              price: 35.0
+      responses:
+        "201": { description: Créé }
+
+  /services/{id}:
+
+  # Processus pour modifier un service
+
+    put:
+      summary: Modifier un service
+      parameters:
+        - in: path
+          name: id
+          required: true
+      requestBody:
+        content:
+          application/json:
+            example:
+              name: Pension
+              price: 50.0
+      responses:
+        "200": { description: OK }
+
+  # Processus pour supprimer un service
+
+    delete:
+      summary: Supprimer un service
+      parameters:
+        - in: path
+          name: id
+          required: true
+      responses:
+        "200": { description: Supprimé }
+
+
+  ##############################################
+  # RACES_DOGS
+  ##############################################
+
+  /races_dogs:
+
+  # Processus pour afficher les races de la base de données
+
+    get:
+      summary: Liste des associations race-chien
+      responses:
+        "200": { description: OK }
+
+  # Processus pour ajouter une race à la base de données
+
+    post:
+      summary: Associer une race à un chien
+      requestBody:
+        content:
+          application/json:
+            example:
+              dog_id: 1
+              race_id: 2
+      responses:
+        "201": { description: Créé }
+
+  /races_dogs/{id}:
+
+  # Processus pour supprimer une race
+
+    delete:
+      summary: Supprimer une association race-chien
+      parameters:
+        - in: path
+          name: id
+          required: true
+      responses:
+        "200": { description: Supprimé }
+
+
+

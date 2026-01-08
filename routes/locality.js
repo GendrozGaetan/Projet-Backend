@@ -1,3 +1,14 @@
+
+// Importe le framework Express
+import express from "express";
+// Importe l'objet de connexion à la base de données (pool de connexions)
+import pool from "../db/db.js";
+
+// Crée un nouvel objet Router Express pour gérer les routes spécifiques aux 'localities'
+const localityRouter = express.Router();
+
+// Définit la route GET pour récupérer toutes les localités (avec filtrage optionnel)
+
 // Importation du framework Express pour créer des routes HTTP
 import express from "express";
 
@@ -14,6 +25,7 @@ const isValidId = (id) => !isNaN(id) && Number.isInteger(Number(id)) && Number(i
 // --- Route GET : récupérer toutes les localités ---
 
 // Définition d’une route GET sur "/" pour récupérer toutes les localités
+
 localityRouter.get('/', async (req, res) => {
 
     // Début du bloc try pour gérer les erreurs
