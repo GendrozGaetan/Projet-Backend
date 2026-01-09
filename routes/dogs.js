@@ -59,7 +59,7 @@ dogsRouter.get('/', async (req, res) => {
             values.push(sterilized);
         }
 
-        // Filtre par prénom : recherche partielle (commence par...)
+        // Filtre par prénom : recherche partielle 
         if (first_name) {
             conditions.push("dogs.first_name LIKE ?");
             values.push(`${first_name}%`);
